@@ -69,10 +69,43 @@ def spawn_two_balls():
         ball_patches.append(ax.plot([], [], 'o', ms=8, color=ball_colors[-1])[0])
         ball_escaped_flags.append(False)
 
+def handle_ball_collisions():
+    n = len(ball_positions)
+    for _ in range(3):  
+        for i in range(n):
+            for j in range(i + 1, n):
+                pos_i = ball_positions[i]
+                pos_j = ball_positions[j]
+                diff = pos_j - pos_i
+                dist = np.linalg.norm(diff)
+                min_dist = 2 * ball_radius
+                
+                if dist < min_dist and dist > 1e-8:
+                    normal = diff / dist
+                    
+                    rel_vel = ball_velocities[i] - ball_velocities[j]
+                    vel_along_normal = np.dot(rel_vel, normal)
+                    
+                    if vel_along_normal < 0: 
+                        impulse = -vel_along_normal
+                        ball_velocities[i] += impulse * normal
+                        ball_velocities[j] -= impulse * normal
+                        
+                    overlap = min_dist - dist
+                    correction = overlap * normal
+                    ball_positions[i] -= correction  
+                    ball_positions[j] += correction  
+
+
 def update(frame):
     theta = rotation_speed * frame
 
+    handle_ball_collisions()
+
     to_remove = []
+    x_limit = radius + 1
+    y_limit = radius + 1
+
     for i in range(len(ball_positions)):
         pos = ball_positions[i]
         vel = ball_velocities[i]
@@ -92,11 +125,12 @@ def update(frame):
                     normal = pos / distance_from_center
                     vel_parallel = normal * np.dot(vel, normal)
                     vel_perpendicular = vel - vel_parallel
-                    vel = vel_perpendicular - vel_parallel  
-                    vel *= 1.0 #Change value for energy loss / gain
+                    vel = vel_perpendicular - vel_parallel
+                    vel *= 1.0
                     pos = normal * (radius - ball_radius - 0.001)
 
-        if pos[1] < -radius - 1.5:
+        if (pos[0] < -x_limit or pos[0] > x_limit or
+            pos[1] < -y_limit or pos[1] > y_limit):
             to_remove.append(i)
 
         ball_positions[i] = pos
@@ -104,10 +138,10 @@ def update(frame):
         ball_patches[i].set_data([pos[0]], [pos[1]])
 
     for i in reversed(to_remove):
+        ball_patches[i].remove()
         del ball_positions[i]
         del ball_velocities[i]
         del ball_escaped_flags[i]
-        ball_patches[i].remove()
         del ball_patches[i]
         del ball_colors[i]
         spawn_two_balls()
@@ -126,6 +160,7 @@ def update(frame):
     hole_patch.set_data(hole_xy[0], hole_xy[1])
 
     return [circle_edge, hole_patch] + ball_patches
+
 
 ani = FuncAnimation(fig, update, frames=1000, interval=20, blit=True)
 plt.title("Circle Escape", color='white')
