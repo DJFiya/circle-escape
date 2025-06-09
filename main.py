@@ -64,10 +64,9 @@ def is_in_hole(pos, angle):
         return ball_angle >= hole_start_norm or ball_angle <= hole_end
 
 def spawn_two_balls():
-    offset = 0.5  # Increased separation to reduce immediate collisions
+    offset = 0.5 
     vel = np.array([1.5, 2.0])
     for i, dx in enumerate([-offset, offset]):
-        # Add some random variation to initial positions and velocities
         random_y = np.random.uniform(-0.2, 0.2)
         random_vel_x = np.random.uniform(-0.5, 0.5)
         random_vel_y = np.random.uniform(-0.5, 0.5)
@@ -85,7 +84,6 @@ def handle_ball_collisions():
     if n < 2:
         return
     
-    # Update cooldown timers
     for i in range(n):
         cooldown_dict = ball_collision_cooldowns[i]
         keys_to_remove = []
@@ -97,63 +95,48 @@ def handle_ball_collisions():
         for key in keys_to_remove:
             del cooldown_dict[key]
     
-    min_separation = 2 * ball_radius + 0.03  # Buffer to prevent immediate re-collision
-    cooldown_frames = 10  # Prevent collision between same pair for 10 frames
+    min_separation = 2 * ball_radius + 0.03  
+    cooldown_frames = 10  
     
     for i in range(n):
         for j in range(i + 1, n):
-            # Check if these balls are in cooldown
             if j in ball_collision_cooldowns[i] or i in ball_collision_cooldowns[j]:
                 continue
             
             pos_i = ball_positions[i]
             pos_j = ball_positions[j]
             
-            # Calculate distance between centers
             diff = pos_j - pos_i
             distance = np.linalg.norm(diff)
             
-            # Check if balls are overlapping
             if distance < min_separation and distance > 1e-10:
-                # Calculate collision normal (from ball i to ball j)
                 collision_normal = diff / distance
                 
-                # Calculate overlap and separate balls immediately
                 overlap = min_separation - distance
-                separation_distance = overlap / 2 + 0.02  # Extra buffer
+                separation_distance = overlap / 2 + 0.02
                 
-                # Teleport balls apart along collision normal
                 ball_positions[i] -= collision_normal * separation_distance
                 ball_positions[j] += collision_normal * separation_distance
                 
-                # Now handle the physics properly
                 vel_i = ball_velocities[i]
                 vel_j = ball_velocities[j]
                 
-                # Project velocities onto collision normal
                 vel_i_normal = np.dot(vel_i, collision_normal)
                 vel_j_normal = np.dot(vel_j, collision_normal)
                 
-                # Only resolve if balls are moving towards each other
                 relative_velocity = vel_i_normal - vel_j_normal
                 if relative_velocity < 0:  # Moving towards each other
-                    # Calculate tangential velocities (perpendicular to collision)
                     vel_i_tangent = vel_i - vel_i_normal * collision_normal
                     vel_j_tangent = vel_j - vel_j_normal * collision_normal
                     
-                    # For elastic collision between equal masses, normal velocities are exchanged
-                    # Add restitution factor for some energy loss
                     restitution = 0.85
                     
-                    # New normal velocities after collision
                     new_vel_i_normal = vel_j_normal * restitution
                     new_vel_j_normal = vel_i_normal * restitution
                     
-                    # Combine normal and tangential components
                     ball_velocities[i] = new_vel_i_normal * collision_normal + vel_i_tangent
                     ball_velocities[j] = new_vel_j_normal * collision_normal + vel_j_tangent
                     
-                    # Add small random perturbation to prevent perfect stacking
                     perturbation = 0.05
                     random_angle = np.random.random() * 2 * np.pi
                     random_perturb = np.array([np.cos(random_angle), np.sin(random_angle)]) * perturbation
@@ -161,7 +144,6 @@ def handle_ball_collisions():
                     ball_velocities[i] += random_perturb
                     ball_velocities[j] -= random_perturb
                     
-                    # Set cooldown to prevent immediate re-collision
                     ball_collision_cooldowns[i][j] = cooldown_frames
                     ball_collision_cooldowns[j][i] = cooldown_frames  
 
@@ -205,17 +187,14 @@ def update(frame):
         ball_positions[i] = pos
         ball_velocities[i] = vel
 
-    # Clear data for balls that will be removed to prevent visual artifacts
     for i in to_remove:
         ball_patches[i].set_data([], [])
 
-    # Update positions for remaining balls
     for i in range(len(ball_positions)):
         if i not in to_remove:
             pos = ball_positions[i]
             ball_patches[i].set_data([pos[0]], [pos[1]])
 
-    # Remove balls in reverse order to maintain correct indices
     for i in reversed(to_remove):
         ball_patches[i].remove()
         del ball_positions[i]
@@ -223,9 +202,8 @@ def update(frame):
         del ball_escaped_flags[i]
         del ball_patches[i]
         del ball_colors[i]
-        del ball_collision_cooldowns[i]  # Remove cooldown data
+        del ball_collision_cooldowns[i] 
         
-        # Update collision cooldown indices for remaining balls
         for k in range(len(ball_collision_cooldowns)):
             cooldown_dict = ball_collision_cooldowns[k]
             new_cooldown_dict = {}
@@ -234,7 +212,6 @@ def update(frame):
                     new_cooldown_dict[other_ball] = timer
                 elif other_ball > i:
                     new_cooldown_dict[other_ball - 1] = timer
-                # Skip other_ball == i as that ball is being removed
             ball_collision_cooldowns[k] = new_cooldown_dict
         
         spawn_two_balls()
