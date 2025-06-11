@@ -14,7 +14,7 @@ dt = 0.05
 revolutions = 3
 frame_number = 1000
 rotation_speed = 2 * revolutions * np.pi / frame_number
-trail_length = 25  # length of comet trail
+trail_length = 25 
 
 # Figure setup
 fig, ax = plt.subplots()
@@ -40,6 +40,7 @@ ball_trail_collections = []
 
 circle_edge, = ax.plot([], [], 'b-')
 hole_patch, = ax.plot([], [], 'k', lw=4)
+ball_count_text = ax.text(0, radius + 0.5, '', ha='center', va='bottom', fontsize=12, color='white', weight='bold')
 
 def random_color():
     return (random.random(), random.random(), random.random())
@@ -204,7 +205,9 @@ def update(frame):
     hole_coords = rotate_point(np.array([radius*np.cos(hole_angles), radius*np.sin(hole_angles)]), theta)
     hole_patch.set_data(*hole_coords)
 
-    return [circle_edge, hole_patch] + ball_patches + ball_trail_collections
+    ball_count_text.set_text(f"Balls: {len(ball_positions)}")
+
+    return [circle_edge, hole_patch, ball_count_text] + ball_patches + ball_trail_collections
 
 ani = FuncAnimation(fig, update, frames=frame_number, interval=20, blit=False)
 plt.title("Circle Escape", color='white')
