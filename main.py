@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.collections import LineCollection
+from matplotlib.widgets import Slider
 import random
 from collections import defaultdict
 
@@ -10,7 +11,7 @@ radius = 5.0
 ball_radius = 0.2
 hole_angle = np.pi / 6
 hole_start = np.pi / 4
-gravity = 0.05
+gravity = [0.05]  # Mutable so it can be updated via slider
 dt = 0.05
 revolutions = 3
 frame_number = 1000
@@ -29,6 +30,9 @@ ax.set_xticks([])
 ax.set_yticks([])
 for spine in ax.spines.values():
     spine.set_visible(False)
+
+# Title
+ax.set_title("Circle Escape", color='white', fontsize=14, weight='bold')
 
 # Objects
 ball_positions, ball_velocities, ball_colors = [], [], []
@@ -123,7 +127,7 @@ def update(frame):
 
     for i in range(len(ball_positions)):
         pos, vel = ball_positions[i], ball_velocities[i]
-        vel[1] -= gravity
+        vel[1] -= gravity[0]
         pos += vel * dt
 
         dist = np.linalg.norm(pos)
@@ -185,6 +189,18 @@ def update(frame):
 
     return [circle_edge, hole_patch, ball_count_text] + ball_patches + ball_trail_collections
 
+# Gravity slider
+slider_ax = fig.add_axes([0.25, 0.03, 0.5, 0.02], facecolor='black')
+gravity_slider = Slider(slider_ax, '', 0.0, 0.2, valinit=gravity[0], color='white')
+
+label_ax = fig.add_axes([0.15, 0.03, 0.07, 0.02])
+label_ax.axis('off')
+label_ax.text(0, 0.5, 'Gravity:', color='white', fontsize=10, va='center', ha='left')
+
+def update_gravity(val):
+    gravity[0] = gravity_slider.val
+
+gravity_slider.on_changed(update_gravity)
+
 ani = FuncAnimation(fig, update, frames=frame_number, interval=20, blit=False)
-plt.title("Circle Escape", color='white')
 plt.show()

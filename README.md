@@ -8,6 +8,7 @@ A simple physics-based animation/game where balls bounce inside a rotating circl
 - The circle rotates, and a hole allows balls to escape.
 - When a ball escapes, two new balls spawn.
 - Colorful balls and a visually appealing animation.
+- Gravity slider to manipulate the physics of the system.
 
 ## Requirements
 
